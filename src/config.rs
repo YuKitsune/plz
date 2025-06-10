@@ -177,7 +177,7 @@ pub struct Config {
 
     #[serde(default)]
     #[serde(alias = "opts")]
-    pub options: DingusOptions,
+    pub options: Options,
 }
 
 fn default_imports() -> Vec<Import> {
@@ -208,7 +208,7 @@ pub struct Import {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub struct DingusOptions {
+pub struct Options {
     /// When set to `true`, commands will be printed to stdout before executing them.
     /// Defaults to `false`.
     #[serde(default = "default_print_commands")]
@@ -225,9 +225,9 @@ pub struct DingusOptions {
     pub auto_args: bool,
 }
 
-impl Default for DingusOptions {
+impl Default for Options {
     fn default() -> Self {
-        DingusOptions {
+        Options {
             print_commands: default_print_commands(),
             print_variables: default_print_variables(),
             auto_args: default_auto_args(),

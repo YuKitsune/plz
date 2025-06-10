@@ -4,8 +4,6 @@ sidebar_position: 3
 
 # Configuration
 
-## plzfile
-
 When executing plz, it will look in the current directory a `plz.yaml` file.
 If there is no file in the current directory, it will check all parent directories until it finds one.
 

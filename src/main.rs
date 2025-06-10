@@ -88,7 +88,7 @@ fn main() -> Result<()> {
                     &config.options,
                 ))),
                 argument_resolver: Box::new(arg_resolver),
-                dingus_options: config.options.clone(),
+                options: config.options.clone(),
             };
 
             let variables = variable_resolver.resolve_variables(&available_variable_configs)?;

@@ -1,6 +1,6 @@
 use crate::args::ALIAS_ARGS_NAME;
 use crate::config::{
-    ActionConfig, ArgumentConfigVariant, CommandConfig, CommandConfigMap, Config, DingusOptions,
+    ActionConfig, ArgumentConfigVariant, CommandConfig, CommandConfigMap, Config, Options,
     ExecutionConfigVariant, NamedArgumentConfig, RawCommandConfigVariant, VariableConfig,
     VariableConfigMap,
 };
@@ -35,7 +35,7 @@ pub fn create_root_command(
 }
 
 fn create_commands(
-    dingus_options: &DingusOptions,
+    options: &Options,
     commands: &CommandConfigMap,
     parent_variables: &VariableConfigMap,
     platform_provider: &Box<dyn PlatformProvider>,
@@ -64,10 +64,10 @@ fn create_commands(
             let mut variables = parent_variables.clone();
             variables.extend(command_config.variables.clone());
 
-            let args = create_args(dingus_options, &variables);
+            let args = create_args(options, &variables);
 
             let subcommands = create_commands(
-                dingus_options,
+                options,
                 &command_config.commands,
                 &variables,
                 &platform_provider,
@@ -106,7 +106,7 @@ fn create_commands(
 }
 
 fn create_args(
-    dingus_options: &DingusOptions,
+    options: &Options,
     variable_config_map: &VariableConfigMap,
 ) -> Vec<Arg> {
     variable_config_map
@@ -121,7 +121,7 @@ fn create_args(
             };
 
             // Automatically create an argument if the auto_args option is enabled
-            if dingus_options.auto_args && arg_config == None {
+            if options.auto_args && arg_config == None {
                 arg_config = Some(ArgumentConfigVariant::Shorthand(key.clone()));
             }
 
@@ -252,7 +252,7 @@ mod tests {
     use crate::config::OneOrManyPlatforms::{Many, One};
     use crate::config::RawCommandConfigVariant::Shorthand;
     use crate::config::{
-        ActionConfig, AliasActionConfig, CommandConfig, DingusOptions, ExecutionVariableConfig,
+        ActionConfig, AliasActionConfig, CommandConfig, Options, ExecutionVariableConfig,
         LiteralVariableConfig, ManyPlatforms, OnePlatform, Platform, PositionalArgumentConfig,
         PromptConfig, PromptVariableConfig, SingleActionConfig, VariableConfig,
     };
@@ -321,7 +321,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &parent_variables,
             &Box::new(platform_provider),
@@ -413,7 +413,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &parent_variables,
             &Box::new(platform_provider),
@@ -519,7 +519,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -586,7 +586,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -624,7 +624,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -672,7 +672,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &commands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -767,7 +767,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &commands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -799,7 +799,7 @@ mod tests {
     #[test]
     fn create_args_creates_correct_args() {
         // Arrange
-        let options = DingusOptions::default();
+        let options = Options::default();
 
         let mut variables = VariableConfigMap::new();
         variables.insert(
@@ -882,7 +882,7 @@ mod tests {
     #[test]
     fn auto_args_creates_correct_args() {
         // Arrange
-        let options = DingusOptions {
+        let options = Options {
             print_commands: false,
             print_variables: false,
             auto_args: true,
@@ -959,7 +959,7 @@ mod tests {
             description: None,
             variables: root_variables,
             commands: commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();
@@ -1066,7 +1066,7 @@ mod tests {
             description: None,
             variables: root_variables,
             commands: parent_commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();
@@ -1153,7 +1153,7 @@ mod tests {
             description: None,
             variables: root_variables,
             commands: parent_commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();
@@ -1202,7 +1202,7 @@ mod tests {
             description: None,
             variables: Default::default(),
             commands: commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();
@@ -1248,7 +1248,7 @@ mod tests {
             description: None,
             variables: Default::default(),
             commands: commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();

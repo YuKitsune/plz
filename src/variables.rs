@@ -1,5 +1,5 @@
 use crate::args::ArgumentResolver;
-use crate::config::{DingusOptions, PromptOptionsVariant, VariableConfig, VariableConfigMap};
+use crate::config::{Options, PromptOptionsVariant, VariableConfig, VariableConfigMap};
 use crate::exec::{CommandExecutor, ExecutionError, ExitStatus};
 use crate::prompt::{PromptError, PromptExecutor};
 use colored::Colorize;
@@ -22,7 +22,7 @@ pub struct RealVariableResolver {
     pub command_executor: Box<dyn CommandExecutor>,
     pub prompt_executor: Box<dyn PromptExecutor>,
     pub argument_resolver: Box<dyn ArgumentResolver>,
-    pub dingus_options: DingusOptions,
+    pub options: Options,
 }
 
 impl VariableResolver for RealVariableResolver {
@@ -112,7 +112,7 @@ impl VariableResolver for RealVariableResolver {
 
 impl RealVariableResolver {
     fn log_variables(&self, variables: &VariableMap, sensitive_variable_names: &Vec<String>) {
-        if !self.dingus_options.print_variables {
+        if !self.options.print_variables {
             return;
         }
 
@@ -243,7 +243,7 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
@@ -280,7 +280,7 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
@@ -330,7 +330,7 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
@@ -382,7 +382,7 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
@@ -432,7 +432,7 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
@@ -482,7 +482,7 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
