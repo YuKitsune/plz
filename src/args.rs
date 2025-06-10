@@ -105,13 +105,8 @@ mod tests {
         // Act
         let file_name_1 = "first.txt";
         let file_name_2 = "second.txt";
-        let root_matches = root_command.get_matches_from(vec![
-            "plz",
-            "print",
-            "--file",
-            file_name_1,
-            file_name_2,
-        ]);
+        let root_matches =
+            root_command.get_matches_from(vec!["plz", "print", "--file", file_name_1, file_name_2]);
         let (subcommand_name, subcommand_matches) = root_matches.subcommand().unwrap();
         assert_eq!(subcommand_name, "print");
 

@@ -1,7 +1,7 @@
 use crate::args::ALIAS_ARGS_NAME;
 use crate::config::{
-    ActionConfig, ArgumentConfigVariant, CommandConfig, CommandConfigMap, Config, Options,
-    ExecutionConfigVariant, NamedArgumentConfig, RawCommandConfigVariant, VariableConfig,
+    ActionConfig, ArgumentConfigVariant, CommandConfig, CommandConfigMap, Config,
+    ExecutionConfigVariant, NamedArgumentConfig, Options, RawCommandConfigVariant, VariableConfig,
     VariableConfigMap,
 };
 use crate::platform::{is_current_platform, PlatformProvider};
@@ -105,10 +105,7 @@ fn create_commands(
         .collect()
 }
 
-fn create_args(
-    options: &Options,
-    variable_config_map: &VariableConfigMap,
-) -> Vec<Arg> {
+fn create_args(options: &Options, variable_config_map: &VariableConfigMap) -> Vec<Arg> {
     variable_config_map
         .iter()
         .map(|(key, var_config)| -> Option<Arg> {
@@ -252,9 +249,10 @@ mod tests {
     use crate::config::OneOrManyPlatforms::{Many, One};
     use crate::config::RawCommandConfigVariant::Shorthand;
     use crate::config::{
-        ActionConfig, AliasActionConfig, CommandConfig, Options, ExecutionVariableConfig,
-        LiteralVariableConfig, ManyPlatforms, OnePlatform, Platform, PositionalArgumentConfig,
-        PromptConfig, PromptVariableConfig, SingleActionConfig, VariableConfig,
+        ActionConfig, AliasActionConfig, CommandConfig, ExecutionVariableConfig,
+        LiteralVariableConfig, ManyPlatforms, OnePlatform, Options, Platform,
+        PositionalArgumentConfig, PromptConfig, PromptVariableConfig, SingleActionConfig,
+        VariableConfig,
     };
     use crate::platform::MockPlatformProvider;
 

@@ -6,7 +6,7 @@ use std::{fmt, io};
 use thiserror::Error;
 
 use crate::config::{
-    Options, ExecutionConfigVariant, RawCommandConfigVariant, ShellCommandConfigVariant,
+    ExecutionConfigVariant, Options, RawCommandConfigVariant, ShellCommandConfigVariant,
 };
 use crate::exec::ExitStatus::Unknown;
 use crate::variables;
