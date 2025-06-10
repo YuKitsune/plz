@@ -8,9 +8,9 @@ use std::path::PathBuf;
 use std::{env, fs, io};
 use thiserror::Error;
 
-const CONFIG_FILE_NAMES: [&str; 4] = ["dingus.yaml", "Dingus.yaml", "dingus.yml", "Dingus.yml"];
+const CONFIG_FILE_NAMES: [&str; 4] = ["plz.yaml", "Plz.yaml", "plz.yml", "Plz.yml"];
 
-const DEFAULT_CONFIG_FILE: &str = "description: My Dingus file
+const DEFAULT_CONFIG_FILE: &str = "description: My plzfile
 
 variables:
   name: Godzilla
@@ -177,7 +177,7 @@ pub struct Config {
 
     #[serde(default)]
     #[serde(alias = "opts")]
-    pub options: DingusOptions,
+    pub options: Options,
 }
 
 fn default_imports() -> Vec<Import> {
@@ -208,7 +208,7 @@ pub struct Import {
 }
 
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
-pub struct DingusOptions {
+pub struct Options {
     /// When set to `true`, commands will be printed to stdout before executing them.
     /// Defaults to `false`.
     #[serde(default = "default_print_commands")]
@@ -225,9 +225,9 @@ pub struct DingusOptions {
     pub auto_args: bool,
 }
 
-impl Default for DingusOptions {
+impl Default for Options {
     fn default() -> Self {
-        DingusOptions {
+        Options {
             print_commands: default_print_commands(),
             print_variables: default_print_variables(),
             auto_args: default_auto_args(),
@@ -236,21 +236,21 @@ impl Default for DingusOptions {
 }
 
 fn default_print_commands() -> bool {
-    match env::var("DINGUS_PRINT_COMMANDS") {
+    match env::var("PLZ_PRINT_COMMANDS") {
         Ok(str) => is_truthy(str),
         Err(_) => false,
     }
 }
 
 fn default_print_variables() -> bool {
-    match env::var("DINGUS_PRINT_VARIABLES") {
+    match env::var("PLZ_PRINT_VARIABLES") {
         Ok(str) => is_truthy(str),
         Err(_) => false,
     }
 }
 
 fn default_auto_args() -> bool {
-    match env::var("DINGUS_AUTO_ARGS") {
+    match env::var("PLZ_AUTO_ARGS") {
         Ok(str) => is_truthy(str),
         Err(_) => false,
     }
@@ -307,7 +307,7 @@ impl VariableConfig {
 /// ```yaml
 /// name:
 ///     arg: name
-///     value: Dingus
+///     value: Alice
 /// ```
 #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
 pub struct LiteralVariableConfig {
@@ -1460,7 +1460,7 @@ commands:
       source: {}
       platform: Linux
 variables:
-    first_name: Dingus
+    first_name: Alice
 commands:
     demo:
         action: echo \"Your first name is $first_name!\"",
@@ -1480,7 +1480,7 @@ commands:
         );
         assert_eq!(
             config.variables.get("first_name").unwrap(),
-            &VariableConfig::ShorthandLiteral("Dingus".to_string())
+            &VariableConfig::ShorthandLiteral("Alice".to_string())
         );
 
         let second_level_command = config.commands.get("level-2").unwrap();
@@ -1531,7 +1531,7 @@ commands:
       source: {}
       platform: Windows
 variables:
-    first_name: Dingus
+    first_name: Alice
 commands:
     demo:
         action: echo \"Your first name is $first_name!\"",
@@ -1551,7 +1551,7 @@ commands:
         );
         assert_eq!(
             config.variables.get("first_name").unwrap(),
-            &VariableConfig::ShorthandLiteral("Dingus".to_string())
+            &VariableConfig::ShorthandLiteral("Alice".to_string())
         );
 
         let second_level_command = config.commands.get("other");

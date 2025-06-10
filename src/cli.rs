@@ -1,7 +1,7 @@
 use crate::args::ALIAS_ARGS_NAME;
 use crate::config::{
-    ActionConfig, ArgumentConfigVariant, CommandConfig, CommandConfigMap, Config, DingusOptions,
-    ExecutionConfigVariant, NamedArgumentConfig, RawCommandConfigVariant, VariableConfig,
+    ActionConfig, ArgumentConfigVariant, CommandConfig, CommandConfigMap, Config,
+    ExecutionConfigVariant, NamedArgumentConfig, Options, RawCommandConfigVariant, VariableConfig,
     VariableConfigMap,
 };
 use crate::platform::{is_current_platform, PlatformProvider};
@@ -20,7 +20,7 @@ pub fn create_root_command(
         &platform_provider,
     );
 
-    let mut root_command = Command::new("dingus")
+    let mut root_command = Command::new("plz")
         .version(env!("CARGO_PKG_VERSION"))
         .subcommands(subcommands)
         .subcommand_required(true)
@@ -35,7 +35,7 @@ pub fn create_root_command(
 }
 
 fn create_commands(
-    dingus_options: &DingusOptions,
+    options: &Options,
     commands: &CommandConfigMap,
     parent_variables: &VariableConfigMap,
     platform_provider: &Box<dyn PlatformProvider>,
@@ -64,10 +64,10 @@ fn create_commands(
             let mut variables = parent_variables.clone();
             variables.extend(command_config.variables.clone());
 
-            let args = create_args(dingus_options, &variables);
+            let args = create_args(options, &variables);
 
             let subcommands = create_commands(
-                dingus_options,
+                options,
                 &command_config.commands,
                 &variables,
                 &platform_provider,
@@ -105,10 +105,7 @@ fn create_commands(
         .collect()
 }
 
-fn create_args(
-    dingus_options: &DingusOptions,
-    variable_config_map: &VariableConfigMap,
-) -> Vec<Arg> {
+fn create_args(options: &Options, variable_config_map: &VariableConfigMap) -> Vec<Arg> {
     variable_config_map
         .iter()
         .map(|(key, var_config)| -> Option<Arg> {
@@ -121,7 +118,7 @@ fn create_args(
             };
 
             // Automatically create an argument if the auto_args option is enabled
-            if dingus_options.auto_args && arg_config == None {
+            if options.auto_args && arg_config == None {
                 arg_config = Some(ArgumentConfigVariant::Shorthand(key.clone()));
             }
 
@@ -252,9 +249,10 @@ mod tests {
     use crate::config::OneOrManyPlatforms::{Many, One};
     use crate::config::RawCommandConfigVariant::Shorthand;
     use crate::config::{
-        ActionConfig, AliasActionConfig, CommandConfig, DingusOptions, ExecutionVariableConfig,
-        LiteralVariableConfig, ManyPlatforms, OnePlatform, Platform, PositionalArgumentConfig,
-        PromptConfig, PromptVariableConfig, SingleActionConfig, VariableConfig,
+        ActionConfig, AliasActionConfig, CommandConfig, ExecutionVariableConfig,
+        LiteralVariableConfig, ManyPlatforms, OnePlatform, Options, Platform,
+        PositionalArgumentConfig, PromptConfig, PromptVariableConfig, SingleActionConfig,
+        VariableConfig,
     };
     use crate::platform::MockPlatformProvider;
 
@@ -321,7 +319,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &parent_variables,
             &Box::new(platform_provider),
@@ -413,7 +411,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &parent_variables,
             &Box::new(platform_provider),
@@ -519,7 +517,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -586,7 +584,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -624,7 +622,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &subcommands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -672,7 +670,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &commands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -767,7 +765,7 @@ mod tests {
 
         // Act
         let created_subcommands = create_commands(
-            &DingusOptions::default(),
+            &Options::default(),
             &commands,
             &VariableConfigMap::new(),
             &Box::new(platform_provider),
@@ -799,7 +797,7 @@ mod tests {
     #[test]
     fn create_args_creates_correct_args() {
         // Arrange
-        let options = DingusOptions::default();
+        let options = Options::default();
 
         let mut variables = VariableConfigMap::new();
         variables.insert(
@@ -882,7 +880,7 @@ mod tests {
     #[test]
     fn auto_args_creates_correct_args() {
         // Arrange
-        let options = DingusOptions {
+        let options = Options {
             print_commands: false,
             print_variables: false,
             auto_args: true,
@@ -959,7 +957,7 @@ mod tests {
             description: None,
             variables: root_variables,
             commands: commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();
@@ -967,7 +965,7 @@ mod tests {
         let root_command = create_root_command(&config, &Box::new(platform_provider));
 
         // Act
-        let matches = root_command.clone().get_matches_from(vec!["dingus", "cmd"]);
+        let matches = root_command.clone().get_matches_from(vec!["plz", "cmd"]);
         let (found_command, found_variables, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 
@@ -1066,7 +1064,7 @@ mod tests {
             description: None,
             variables: root_variables,
             commands: parent_commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();
@@ -1076,7 +1074,7 @@ mod tests {
         // Act
         let matches = root_command
             .clone()
-            .get_matches_from(vec!["dingus", "parent", "target"]);
+            .get_matches_from(vec!["plz", "parent", "target"]);
         let (found_command, found_variables, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 
@@ -1153,7 +1151,7 @@ mod tests {
             description: None,
             variables: root_variables,
             commands: parent_commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();
@@ -1163,7 +1161,7 @@ mod tests {
         // Act
         let matches = root_command
             .clone()
-            .get_matches_from(vec!["dingus", "parent", "subcommand"]);
+            .get_matches_from(vec!["plz", "parent", "subcommand"]);
         let (found_command, found_variables, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 
@@ -1202,7 +1200,7 @@ mod tests {
             description: None,
             variables: Default::default(),
             commands: commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();
@@ -1212,7 +1210,7 @@ mod tests {
         // Act
         let matches = root_command
             .clone()
-            .get_matches_from(vec!["dingus", "command"]);
+            .get_matches_from(vec!["plz", "command"]);
         let (found_command, _, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 
@@ -1248,7 +1246,7 @@ mod tests {
             description: None,
             variables: Default::default(),
             commands: commands,
-            options: DingusOptions::default(),
+            options: Options::default(),
         };
 
         let platform_provider = mock_platform_provider();
@@ -1258,7 +1256,7 @@ mod tests {
         // Act
         let matches = root_command
             .clone()
-            .get_matches_from(vec!["dingus", "command"]);
+            .get_matches_from(vec!["plz", "command"]);
         let (found_command, _, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 

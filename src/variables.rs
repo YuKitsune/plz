@@ -1,5 +1,5 @@
 use crate::args::ArgumentResolver;
-use crate::config::{DingusOptions, PromptOptionsVariant, VariableConfig, VariableConfigMap};
+use crate::config::{Options, PromptOptionsVariant, VariableConfig, VariableConfigMap};
 use crate::exec::{CommandExecutor, ExecutionError, ExitStatus};
 use crate::prompt::{PromptError, PromptExecutor};
 use colored::Colorize;
@@ -22,7 +22,7 @@ pub struct RealVariableResolver {
     pub command_executor: Box<dyn CommandExecutor>,
     pub prompt_executor: Box<dyn PromptExecutor>,
     pub argument_resolver: Box<dyn ArgumentResolver>,
-    pub dingus_options: DingusOptions,
+    pub options: Options,
 }
 
 impl VariableResolver for RealVariableResolver {
@@ -112,7 +112,7 @@ impl VariableResolver for RealVariableResolver {
 
 impl RealVariableResolver {
     fn log_variables(&self, variables: &VariableMap, sensitive_variable_names: &Vec<String>) {
-        if !self.dingus_options.print_variables {
+        if !self.options.print_variables {
             return;
         }
 
@@ -243,11 +243,11 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
-        let value = "Dingus";
+        let value = "Alice";
         let mut variable_configs = VariableConfigMap::new();
         variable_configs.insert(
             name.to_string(),
@@ -280,11 +280,11 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
-        let value = "Dingus";
+        let value = "Alice";
         let mut variable_configs = VariableConfigMap::new();
         variable_configs.insert(
             name.to_string(),
@@ -309,7 +309,7 @@ mod tests {
     #[test]
     fn variable_resolver_resolves_execution_variable() {
         // Arrange
-        let value = "Dingus";
+        let value = "Alice";
         let mut command_executor = MockCommandExecutor::new();
         command_executor.expect_get_output().returning(move |_, _| {
             Ok(Output {
@@ -330,7 +330,7 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
@@ -371,7 +371,7 @@ mod tests {
             .times(0..)
             .returning(|_| None);
 
-        let value = "Dingus";
+        let value = "Alice";
         let mut prompt_executor = MockPromptExecutor::new();
         prompt_executor
             .expect_execute()
@@ -382,7 +382,7 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
@@ -421,7 +421,7 @@ mod tests {
             .times(0..)
             .returning(|_| None);
 
-        let value = "Dingus";
+        let value = "Alice";
         let mut prompt_executor = MockPromptExecutor::new();
         prompt_executor
             .expect_execute()
@@ -432,7 +432,7 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
@@ -449,7 +449,7 @@ mod tests {
                             "Alice".to_string(),
                             "Bob".to_string(),
                             "Charlie".to_string(),
-                            "Dingus".to_string(),
+                            "Dale".to_string(),
                         ]),
                     }),
                 },
@@ -482,11 +482,11 @@ mod tests {
             command_executor: Box::new(command_executor),
             prompt_executor: Box::new(prompt_executor),
             argument_resolver: Box::new(argument_resolver),
-            dingus_options: Default::default(),
+            options: Default::default(),
         };
 
         let name = "name";
-        let value = "Dingus";
+        let value = "Alice";
         let env_var_name = "USER_NAME";
         let mut variable_configs = VariableConfigMap::new();
         variable_configs.insert(
@@ -514,14 +514,14 @@ mod tests {
         // Arrange
         let template = "Hello, $name! You are $age years old.";
         let mut variables = VariableMap::new();
-        variables.insert("name".to_string(), "Dingus".to_string());
+        variables.insert("name".to_string(), "Alice".to_string());
         variables.insert("age".to_string(), "100".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, Dingus! You are 100 years old.")
+        assert_eq!(result, "Hello, Alice! You are 100 years old.")
     }
 
     #[test]
@@ -529,14 +529,14 @@ mod tests {
         // Arrange
         let template = "Hello, $name! You are \\$age years old.";
         let mut variables = VariableMap::new();
-        variables.insert("name".to_string(), "Dingus".to_string());
+        variables.insert("name".to_string(), "Alice".to_string());
         variables.insert("age".to_string(), "100".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, Dingus! You are $age years old.")
+        assert_eq!(result, "Hello, Alice! You are $age years old.")
     }
 
     #[test]
@@ -544,14 +544,14 @@ mod tests {
         // Arrange
         let template = "Hello, $first_name $last_name!";
         let mut variables = VariableMap::new();
-        variables.insert("first_name".to_string(), "Dingus".to_string());
-        variables.insert("last_name".to_string(), "Bingus".to_string());
+        variables.insert("first_name".to_string(), "Alice".to_string());
+        variables.insert("last_name".to_string(), "Smith".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, Dingus Bingus!")
+        assert_eq!(result, "Hello, Alice Smith!")
     }
 
     #[test]
@@ -559,14 +559,14 @@ mod tests {
         // Arrange
         let template = "Hello, $first_name$last_name!";
         let mut variables = VariableMap::new();
-        variables.insert("first_name".to_string(), "Dingus".to_string());
-        variables.insert("last_name".to_string(), "Bingus".to_string());
+        variables.insert("first_name".to_string(), "Alice".to_string());
+        variables.insert("last_name".to_string(), "Smith".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, DingusBingus!")
+        assert_eq!(result, "Hello, AliceSmith!")
     }
 
     #[test]
@@ -574,13 +574,13 @@ mod tests {
         // Arrange
         let template = "Hello, $first_name-the-$last_name!";
         let mut variables = VariableMap::new();
-        variables.insert("first_name".to_string(), "Dingus".to_string());
-        variables.insert("last_name".to_string(), "Bingus".to_string());
+        variables.insert("first_name".to_string(), "Alice".to_string());
+        variables.insert("last_name".to_string(), "Smith".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, Dingus-the-Bingus!")
+        assert_eq!(result, "Hello, Alice-the-Smith!")
     }
 }

@@ -4,19 +4,17 @@ sidebar_position: 3
 
 # Configuration
 
-## Dingus file
-
-When executing Dingus, it will look in the current directory a `dingus.yaml` file.
+When executing plz, it will look in the current directory a `plz.yaml` file.
 If there is no file in the current directory, it will check all parent directories until it finds one.
 
-Once a config file has been found, Dingus will use that files location as it's working directory.
+Once a config file has been found, plz will use that files location as it's working directory.
 This allows you to reference files from the config file using relative paths.
 
 ```sh
 $ ls
-docs    license   dingus.yaml
+docs    license   plz.yaml
 
-$ cat dingus.yaml
+$ cat plz.yaml
 commands:
   print-license:
     action: cat license
@@ -26,7 +24,7 @@ MIT
 
 $ cd docs
 
-$ dingus print-license
+$ plz print-license
 MIT
 ```
 
@@ -41,7 +39,7 @@ Variables defined on a specific command are available to that command and any of
 ```yaml
 # Root-level variables
 variables:
-    name: Dingus
+    name: Alice
 
 commands:
     greet:
@@ -79,7 +77,7 @@ The short name can only be one character long.
 ```yaml
 variables:
   name:
-    value: Dingus
+    value: Alice
     argument:
       description: The name of the user to greet
       long: user
@@ -98,8 +96,8 @@ commands:
 ```
 
 ```
-$ dingus --help
-Usage: dingus [OPTIONS] <COMMAND>
+$ plz --help
+Usage: plz [OPTIONS] <COMMAND>
 
 Commands:
   greet    Greet the user
@@ -107,7 +105,7 @@ Commands:
   help     Print this message or the help of the given subcommand(s)
 
 Options:
-  -n  --user <user>  The name of the user to greet [default: Dingus]
+  -n  --user <user>  The name of the user to greet [default: Alice]
       --age <age>    The age of the user to greet [default: 42]
   -h, --help         Print help
 ```
@@ -117,7 +115,7 @@ The `argument` field also accepts a string if a short name and description are n
 ```yaml
 variables:
   name:
-    value: Dingus
+    value: Alice
     argument: user
     
 commands:
@@ -127,8 +125,8 @@ commands:
 ```
 
 ```
-$ dingus --help
-Usage: dingus [OPTIONS] <COMMAND>
+$ plz --help
+Usage: plz [OPTIONS] <COMMAND>
 
 Commands:
   greet    Greet the user
@@ -136,7 +134,7 @@ Commands:
   help     Print this message or the help of the given subcommand(s)
 
 Options:
-      --user <user>  [default: Dingus]
+      --user <user>  [default: Alice]
   -h, --help         Print help
 ```
 
@@ -161,7 +159,7 @@ commands:
 ```
 
 ```
-Usage: dingus deploy [OPTIONS] [environment]
+Usage: plz deploy [OPTIONS] [environment]
 
 Arguments:
   [environment]  [default: Production]
@@ -172,7 +170,7 @@ Options:
 ```
 
 Command-line arguments can automatically be created for all variables by setting the `options.auto_args` field to `true`,
-or by setting the `DINGUS_AUTO_ARGS` environment variable to `true`.
+or by setting the `PLZ_AUTO_ARGS` environment variable to `true`.
 
 ```yaml
 options:
@@ -191,7 +189,7 @@ This value can still be overridden using its relevant command-line argument.
 ```yaml
 variables:
     name:
-        value: dingus
+        value: Alice
         argument: user
 ```
 
@@ -201,7 +199,7 @@ If the `argument` field is not required, literal variables can be shortened to `
 
 ```yaml
 variables:
-    name: dingus
+    name: Alice
 ```
 
 ### Execution Variables
@@ -233,7 +231,7 @@ If the command-line argument for the variable has been specified, then the comma
 
 Prompt variables will be assigned a value provided by the user at runtime.
 
-In this example, Dingus will prompt the user with `What's your name?` and assign the users input to the `name` variable.
+In this example, plz will prompt the user with `What's your name?` and assign the users input to the `name` variable.
 
 ```yaml
 variables:
@@ -302,8 +300,8 @@ commands:
 The configuration above would result in a top-level `build` command with two subcommands.
 
 ```sh
-$ dingus build --help
-Usage: dingus build <COMMAND>
+$ plz build --help
+Usage: plz build <COMMAND>
 
 Commands:
   frontend  Builds the frontend
@@ -314,7 +312,7 @@ Options:
   -h, --help  Print help
 ```
 
-Because the `build` command doesn't have it's own action, `dingus build` cannot be executed on it's own.
+Because the `build` command doesn't have it's own action, `plz build` cannot be executed on it's own.
 
 :::note
 If a command does not have any actions, then it **must** have at least one subcommand.
@@ -343,16 +341,16 @@ commands:
 
 Aliases are similar to commands, but behave more like a traditional shell alias.
 
-In this example, executing `dingus deps` is an alias for `docker compose --file ./docker-compose.deps.yaml`.
-Anything after `dingus deps` will be appended to the end of the target command, just like a traditional shell alias.
+In this example, executing `plz deps` is an alias for `docker compose --file ./docker-compose.deps.yaml`.
+Anything after `plz deps` will be appended to the end of the target command, just like a traditional shell alias.
 
 ```sh
-$ cat dingus.yaml
+$ cat plz.yaml
 commands:
     deps:
         alias: docker compose --file ./docker-compose.deps.yaml
 
-$ dingus deps up -d
+$ plz deps up -d
 [+] Running 2/2
  ✔ Container rabbitmq  Started
  ✔ Container postgres  Started
@@ -378,10 +376,10 @@ commands:
 ```
 
 When the `platform` (or `platforms`) field is specified, then the command will only be available on the specified platforms.
-If the current platform is not one of the specified platforms, then Dingus will ignore the command.
+If the current platform is not one of the specified platforms, then plz will ignore the command.
 
 :::note
-By default, Dingus will use the key to determine the command name.
+By default, plz will use the key to determine the command name.
 Each key in the `commands` map must be unique.
 If you want your command to have the same name across different platforms, use the `name` field to provide an alternative name.
 :::
@@ -389,7 +387,7 @@ If you want your command to have the same name across different platforms, use t
 ### Running other commands
 
 Commands can run other commands defined in the file.
-There is no special syntax for this, just call `dingus` with the desired command the same way you would invoke a command normally.
+There is no special syntax for this, just call `plz` with the desired command the same way you would invoke a command normally.
 
 ```yaml
 commands:
@@ -401,8 +399,8 @@ commands:
     
     rebuild:
         actions:
-            - dingus clean
-            - dingus build
+            - plz clean
+            - plz build
 ```
 
 If the command you need to call is not intented to be used directly, use the `hidden` field to hide it from the help output.
@@ -415,12 +413,12 @@ commands:
 
     start:
         actions:
-            - dingus pre
+            - plz pre
             - ./start.sh
 
     debug:
         actions:
-            - dingus pre
+            - plz pre
             - ./debug.sh
 ```
 
@@ -433,8 +431,8 @@ When a command is hidden, it is only removed from the help output, and any compl
 [Execution variables](#execution-variables), [prompt variable](#prompt-variables) options, and [actions](#actions) all provide a field for command text to be specified.
 This command is the real command that will be executed.
 
-By default, Dingus will execute these commands directly **without a shell**. This is referred to internally as a "raw execution".
-For raw executions, Dingus will perform Bash-like variable substitution against the command text, as well as injecting all of the variables as environment variables so that the process can read them at runtime. This variable substitution is handled by the individual shells for shell executions.
+By default, plz will execute these commands directly **without a shell**. This is referred to internally as a "raw execution".
+For raw executions, plz will perform Bash-like variable substitution against the command text, as well as injecting all of the variables as environment variables so that the process can read them at runtime. This variable substitution is handled by the individual shells for shell executions.
 
 Because raw executions do not rely on a shell, **they do not have access to shell-specific features**.
 
@@ -523,10 +521,10 @@ actions:
 
 ## Logging
 
-By default, Dingus will only output errors or the output from the commands being executed.
+By default, plz will only output errors or the output from the commands being executed.
 
 Variables can be printed before execution by setting the `options.print_variables` field to `true`, or by setting the
-`DINGUS_PRINT_VARIABLES` environment variable to `true`.
+`PLZ_PRINT_VARIABLES` environment variable to `true`.
 
 ```yaml
 options:
@@ -534,7 +532,7 @@ options:
 ```
 
 The command text can also be printed before being executed by setting the `options.print_commands` field to `true`, or
-by setting the `DINGUS_PRINT_COMMANDS` environment variable to `true`.
+by setting the `PLZ_PRINT_COMMANDS` environment variable to `true`.
 
 ```yaml
 options:
@@ -549,13 +547,13 @@ subcommand with the description, variables, and subcommands from the provided fi
 Imports require an `alias`, and a `source`. The `alias` is used to set the name of the subcommand, and the `source` is 
 the path to the file to import.
 
-For example, the following config will import all commands and variables defined in the `./docs/dingus.yaml` file into a
+For example, the following config will import all commands and variables defined in the `./docs/plz.yaml` file into a
 subcommand called `docs`.
 
 ```yaml
 imports:
   - alias: docs
-    source: ./docs/dingus.yaml
+    source: ./docs/plz.yaml
 ```
 
 Imported files can be hidden from the help output, or restricted to specific platforms just like normal commands.
@@ -563,17 +561,17 @@ Imported files can be hidden from the help output, or restricted to specific pla
 ```yaml
 imports:
   - alias: utils
-    source: ./utils/dingus.yaml
+    source: ./utils/plz.yaml
     hidden: true
 
   - alias: packages
-    source: ./packages/nix.dingus.yaml
+    source: ./packages/nix.plz.yaml
     platform:
       - MacOS
       - Linux
     
   - alias: packages
-    source: ./packages/windows.dingus.yaml
+    source: ./packages/windows.plz.yaml
     platform: Windows
 ```
 

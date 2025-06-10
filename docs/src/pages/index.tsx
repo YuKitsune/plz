@@ -25,7 +25,7 @@ function HomepageHeader() {
           </Link>
         </div>
         <div className={styles.code}>
-          <CodeBlock language="sh">cargo install --git https://github.com/YuKitsune/dingus</CodeBlock>
+          <CodeBlock language="sh">cargo install --git https://github.com/YuKitsune/plz</CodeBlock>
         </div>
       </div>
     </header>

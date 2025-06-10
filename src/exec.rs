@@ -6,7 +6,7 @@ use std::{fmt, io};
 use thiserror::Error;
 
 use crate::config::{
-    DingusOptions, ExecutionConfigVariant, RawCommandConfigVariant, ShellCommandConfigVariant,
+    ExecutionConfigVariant, Options, RawCommandConfigVariant, ShellCommandConfigVariant,
 };
 use crate::exec::ExitStatus::Unknown;
 use crate::variables;
@@ -83,14 +83,14 @@ pub trait CommandExecutor {
     ) -> ExecutionOutputResult;
 }
 
-pub fn create_command_executor(options: &DingusOptions) -> Box<dyn CommandExecutor> {
+pub fn create_command_executor(options: &Options) -> Box<dyn CommandExecutor> {
     Box::new(CommandExecutorImpl {
         options: options.clone(),
     })
 }
 
 struct CommandExecutorImpl {
-    options: DingusOptions,
+    options: Options,
 }
 
 impl CommandExecutor for CommandExecutorImpl {
@@ -231,7 +231,7 @@ mod tests {
                 command: format!("echo \"Hello, World!\" > {temp_file_path}"),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.execute(&bash_exec_config, &Default::default());
@@ -247,7 +247,7 @@ mod tests {
     fn bash_command_execute_evaluates_variables() {
         // Arrange
         let variable_name = "name";
-        let variable_value = "Dingus";
+        let variable_value = "Alice";
         let mut variables = HashMap::new();
         variables.insert(variable_name.to_string(), variable_value.to_string());
 
@@ -260,7 +260,7 @@ mod tests {
                 command: format!("echo \"Hello, ${variable_name}!\" > {temp_file_path}"),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.execute(&bash_exec_config, &variables);
@@ -281,7 +281,7 @@ mod tests {
                 command: "exit 42".to_string(),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.execute(&bash_exec_config, &Default::default());
@@ -297,7 +297,7 @@ mod tests {
     fn bash_command_get_output_evaluates_variables() {
         // Arrange
         let variable_name = "name";
-        let variable_value = "Dingus";
+        let variable_value = "Alice";
         let mut variables = HashMap::new();
         variables.insert(variable_name.to_string(), variable_value.to_string());
 
@@ -307,7 +307,7 @@ mod tests {
                 command: format!("echo \"Hello, ${variable_name}!\""),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&bash_exec_config, &variables);
@@ -332,7 +332,7 @@ mod tests {
                 command: "echo \"Hello, World!\"".to_string(),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&bash_exec_config, &HashMap::new());
@@ -357,7 +357,7 @@ mod tests {
                 command: ">&2 echo \"Error message\"".to_string(),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&bash_exec_config, &HashMap::new());
@@ -382,7 +382,7 @@ mod tests {
                 command: "exit 42".to_string(),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&bash_exec_config, &HashMap::new());
@@ -405,7 +405,7 @@ mod tests {
                 command: "pwd".to_string(),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&bash_exec_config, &HashMap::new());
@@ -424,7 +424,7 @@ mod tests {
     fn raw_command_execute_executes_command() {
         // Arrange
         let temp_dir = create_temp_dir();
-        let file_name = "dingus.txt";
+        let file_name = "test.txt";
         let test_file_path = temp_dir.path().join(file_name);
 
         // Sanity check
@@ -433,7 +433,7 @@ mod tests {
         let bash_exec_config = ExecutionConfigVariant::RawCommand(
             RawCommandConfigVariant::Shorthand(format!("touch {}", get_path(&test_file_path))),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.execute(&bash_exec_config, &Default::default());
@@ -449,7 +449,7 @@ mod tests {
     fn raw_command_execute_substitutes_variables_in_invocation() {
         // Arrange
         let temp_dir = create_temp_dir();
-        let file_name = "dingus.txt";
+        let file_name = "test.txt";
         let test_file_path = temp_dir.path().join(file_name);
 
         // Sanity check
@@ -462,7 +462,7 @@ mod tests {
         let exec_config = ExecutionConfigVariant::RawCommand(RawCommandConfigVariant::Shorthand(
             "touch $file_name".to_string(),
         ));
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.execute(&exec_config, &variables);
@@ -480,7 +480,7 @@ mod tests {
         let exec_config = ExecutionConfigVariant::RawCommand(RawCommandConfigVariant::Shorthand(
             "cargo silly".to_string(),
         ));
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.execute(&exec_config, &Default::default());
@@ -506,7 +506,7 @@ mod tests {
         let exec_config = ExecutionConfigVariant::RawCommand(RawCommandConfigVariant::Shorthand(
             "cat $file_name".to_string(),
         ));
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&exec_config, &variables);
@@ -536,7 +536,7 @@ mod tests {
         let exec_config = ExecutionConfigVariant::RawCommand(RawCommandConfigVariant::Shorthand(
             "cargo v".to_string(),
         ));
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&exec_config, &variables);
@@ -561,7 +561,7 @@ mod tests {
         let exec_config = ExecutionConfigVariant::RawCommand(RawCommandConfigVariant::Shorthand(
             format!("cat {temp_file_path}").to_string(),
         ));
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&exec_config, &HashMap::new());
@@ -582,7 +582,7 @@ mod tests {
         let exec_config = ExecutionConfigVariant::RawCommand(RawCommandConfigVariant::Shorthand(
             "cat does_not_exist.txt".to_string(),
         ));
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&exec_config, &HashMap::new());
@@ -606,7 +606,7 @@ mod tests {
                 command: "pwd".to_string(),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&exec_config, &HashMap::new());
@@ -630,7 +630,7 @@ mod tests {
                 command: "shopt -s expand_aliases".to_string(),
             }),
         );
-        let command_executor = create_command_executor(&DingusOptions::default());
+        let command_executor = create_command_executor(&Options::default());
 
         // Act
         let result = command_executor.get_output(&exec_config, &HashMap::new());

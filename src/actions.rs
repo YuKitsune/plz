@@ -116,7 +116,7 @@ mod tests {
     fn execute_single_step() {
         // Arrange
         let mut variables = VariableMap::new();
-        variables.insert("name".to_string(), "Dingus".to_string());
+        variables.insert("name".to_string(), "Alice".to_string());
 
         let command_text = "echo Hello, $name!";
 
@@ -157,7 +157,7 @@ mod tests {
     fn execute_multi_step() {
         // Arrange
         let mut variables = VariableMap::new();
-        variables.insert("name".to_string(), "Dingus".to_string());
+        variables.insert("name".to_string(), "Alice".to_string());
 
         let command_text_1 = "echo Hello, $name!";
         let command_text_2 = "echo Deleting your boot sector...";
@@ -215,7 +215,7 @@ mod tests {
     fn execute_alias() {
         // Arrange
         let mut variables = VariableMap::new();
-        variables.insert("name".to_string(), "Dingus".to_string());
+        variables.insert("name".to_string(), "Alice".to_string());
 
         let command_text = "docker compose";
 

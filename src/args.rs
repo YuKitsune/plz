@@ -62,10 +62,10 @@ mod tests {
         let arg = single_arg(&"name".to_string());
 
         // Act
-        let value = "Dingus";
-        let matches = Command::new("dingus")
+        let value = "Alice";
+        let matches = Command::new("plz")
             .arg(arg)
-            .get_matches_from(vec!["dingus", "--name", value]);
+            .get_matches_from(vec!["plz", "--name", value]);
 
         let arg_resolver = ClapArgumentResolver::from_arg_matches(&matches);
 
@@ -80,10 +80,10 @@ mod tests {
         let arg = single_arg(&"name".to_string());
         let greet_command = Command::new("greet").arg(arg);
 
-        let root_command = Command::new("dingus").subcommand(greet_command);
+        let root_command = Command::new("plz").subcommand(greet_command);
 
-        let value = "Dingus";
-        let root_matches = root_command.get_matches_from(vec!["dingus", "greet", "--name", value]);
+        let value = "Alice";
+        let root_matches = root_command.get_matches_from(vec!["plz", "greet", "--name", value]);
         let (subcommand_name, subcommand_matches) = root_matches.subcommand().unwrap();
         assert_eq!(subcommand_name, "greet");
 
@@ -100,18 +100,13 @@ mod tests {
         let file_arg = multi_arg(&"file".to_string());
         let print_command = Command::new("print").arg(file_arg);
 
-        let root_command = Command::new("dingus").subcommand(print_command);
+        let root_command = Command::new("plz").subcommand(print_command);
 
         // Act
         let file_name_1 = "first.txt";
         let file_name_2 = "second.txt";
-        let root_matches = root_command.get_matches_from(vec![
-            "dingus",
-            "print",
-            "--file",
-            file_name_1,
-            file_name_2,
-        ]);
+        let root_matches =
+            root_command.get_matches_from(vec!["plz", "print", "--file", file_name_1, file_name_2]);
         let (subcommand_name, subcommand_matches) = root_matches.subcommand().unwrap();
         assert_eq!(subcommand_name, "print");
 
