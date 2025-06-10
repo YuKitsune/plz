@@ -20,7 +20,7 @@ pub fn create_root_command(
         &platform_provider,
     );
 
-    let mut root_command = Command::new("dingus")
+    let mut root_command = Command::new("plz")
         .version(env!("CARGO_PKG_VERSION"))
         .subcommands(subcommands)
         .subcommand_required(true)
@@ -967,7 +967,7 @@ mod tests {
         let root_command = create_root_command(&config, &Box::new(platform_provider));
 
         // Act
-        let matches = root_command.clone().get_matches_from(vec!["dingus", "cmd"]);
+        let matches = root_command.clone().get_matches_from(vec!["plz", "cmd"]);
         let (found_command, found_variables, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 
@@ -1076,7 +1076,7 @@ mod tests {
         // Act
         let matches = root_command
             .clone()
-            .get_matches_from(vec!["dingus", "parent", "target"]);
+            .get_matches_from(vec!["plz", "parent", "target"]);
         let (found_command, found_variables, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 
@@ -1163,7 +1163,7 @@ mod tests {
         // Act
         let matches = root_command
             .clone()
-            .get_matches_from(vec!["dingus", "parent", "subcommand"]);
+            .get_matches_from(vec!["plz", "parent", "subcommand"]);
         let (found_command, found_variables, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 
@@ -1212,7 +1212,7 @@ mod tests {
         // Act
         let matches = root_command
             .clone()
-            .get_matches_from(vec!["dingus", "command"]);
+            .get_matches_from(vec!["plz", "command"]);
         let (found_command, _, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 
@@ -1258,7 +1258,7 @@ mod tests {
         // Act
         let matches = root_command
             .clone()
-            .get_matches_from(vec!["dingus", "command"]);
+            .get_matches_from(vec!["plz", "command"]);
         let (found_command, _, _) =
             find_subcommand(&matches, &root_command, &config.commands, &config.variables).unwrap();
 

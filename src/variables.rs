@@ -247,7 +247,7 @@ mod tests {
         };
 
         let name = "name";
-        let value = "Dingus";
+        let value = "Alice";
         let mut variable_configs = VariableConfigMap::new();
         variable_configs.insert(
             name.to_string(),
@@ -284,7 +284,7 @@ mod tests {
         };
 
         let name = "name";
-        let value = "Dingus";
+        let value = "Alice";
         let mut variable_configs = VariableConfigMap::new();
         variable_configs.insert(
             name.to_string(),
@@ -309,7 +309,7 @@ mod tests {
     #[test]
     fn variable_resolver_resolves_execution_variable() {
         // Arrange
-        let value = "Dingus";
+        let value = "Alice";
         let mut command_executor = MockCommandExecutor::new();
         command_executor.expect_get_output().returning(move |_, _| {
             Ok(Output {
@@ -371,7 +371,7 @@ mod tests {
             .times(0..)
             .returning(|_| None);
 
-        let value = "Dingus";
+        let value = "Alice";
         let mut prompt_executor = MockPromptExecutor::new();
         prompt_executor
             .expect_execute()
@@ -421,7 +421,7 @@ mod tests {
             .times(0..)
             .returning(|_| None);
 
-        let value = "Dingus";
+        let value = "Alice";
         let mut prompt_executor = MockPromptExecutor::new();
         prompt_executor
             .expect_execute()
@@ -449,7 +449,7 @@ mod tests {
                             "Alice".to_string(),
                             "Bob".to_string(),
                             "Charlie".to_string(),
-                            "Dingus".to_string(),
+                            "Dale".to_string(),
                         ]),
                     }),
                 },
@@ -486,7 +486,7 @@ mod tests {
         };
 
         let name = "name";
-        let value = "Dingus";
+        let value = "Alice";
         let env_var_name = "USER_NAME";
         let mut variable_configs = VariableConfigMap::new();
         variable_configs.insert(
@@ -514,14 +514,14 @@ mod tests {
         // Arrange
         let template = "Hello, $name! You are $age years old.";
         let mut variables = VariableMap::new();
-        variables.insert("name".to_string(), "Dingus".to_string());
+        variables.insert("name".to_string(), "Alice".to_string());
         variables.insert("age".to_string(), "100".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, Dingus! You are 100 years old.")
+        assert_eq!(result, "Hello, Alice! You are 100 years old.")
     }
 
     #[test]
@@ -529,14 +529,14 @@ mod tests {
         // Arrange
         let template = "Hello, $name! You are \\$age years old.";
         let mut variables = VariableMap::new();
-        variables.insert("name".to_string(), "Dingus".to_string());
+        variables.insert("name".to_string(), "Alice".to_string());
         variables.insert("age".to_string(), "100".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, Dingus! You are $age years old.")
+        assert_eq!(result, "Hello, Alice! You are $age years old.")
     }
 
     #[test]
@@ -544,14 +544,14 @@ mod tests {
         // Arrange
         let template = "Hello, $first_name $last_name!";
         let mut variables = VariableMap::new();
-        variables.insert("first_name".to_string(), "Dingus".to_string());
-        variables.insert("last_name".to_string(), "Bingus".to_string());
+        variables.insert("first_name".to_string(), "Alice".to_string());
+        variables.insert("last_name".to_string(), "Smith".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, Dingus Bingus!")
+        assert_eq!(result, "Hello, Alice Smith!")
     }
 
     #[test]
@@ -559,14 +559,14 @@ mod tests {
         // Arrange
         let template = "Hello, $first_name$last_name!";
         let mut variables = VariableMap::new();
-        variables.insert("first_name".to_string(), "Dingus".to_string());
-        variables.insert("last_name".to_string(), "Bingus".to_string());
+        variables.insert("first_name".to_string(), "Alice".to_string());
+        variables.insert("last_name".to_string(), "Smith".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, DingusBingus!")
+        assert_eq!(result, "Hello, AliceSmith!")
     }
 
     #[test]
@@ -574,13 +574,13 @@ mod tests {
         // Arrange
         let template = "Hello, $first_name-the-$last_name!";
         let mut variables = VariableMap::new();
-        variables.insert("first_name".to_string(), "Dingus".to_string());
-        variables.insert("last_name".to_string(), "Bingus".to_string());
+        variables.insert("first_name".to_string(), "Alice".to_string());
+        variables.insert("last_name".to_string(), "Smith".to_string());
 
         // Act
         let result = substitute_variables(template, &variables);
 
         // Assert
-        assert_eq!(result, "Hello, Dingus-the-Bingus!")
+        assert_eq!(result, "Hello, Alice-the-Smith!")
     }
 }

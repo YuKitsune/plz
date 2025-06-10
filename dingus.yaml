@@ -1,6 +1,6 @@
 imports:
   - alias: docs
-    source: ./docs/dingus.yaml
+    source: ./docs/plz.yaml
 
 commands:
 
@@ -17,5 +17,5 @@ commands:
     alias: cargo fmt --all
 
   install:
-    description: Installs the dingus binary into the local system
+    description: Installs the plz binary into the local system
     action: cargo install --path .

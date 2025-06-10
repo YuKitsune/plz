@@ -5,7 +5,7 @@ sidebar_label: Introduction
 
 # Introduction
 
-Dingus is a dead-simple task runner with a familiar POSIX-style interface.
+plz is a dead-simple task runner with a familiar POSIX-style interface.
 It's lightweight, easy to use, and perfect for consolidating project-specific tasks.
 
 ## Features
@@ -18,12 +18,12 @@ It's lightweight, easy to use, and perfect for consolidating project-specific ta
 ## Overview
 
 :::warning
-Dingus is still in early development and it's configuration syntax and usage are subject to change.
+[;z] is still in early development and it's configuration syntax and usage are subject to change.
 :::
 
-Dingus relies on YAML for its configuration.
+plz relies on YAML for its configuration.
 
-In your `Dingus.yaml`, you can define variables at the root level.
+In your `plz.yaml`, you can define variables at the root level.
 These variables are global, so they're available to all commands and subcommands throughout the file.
 
 Example:
@@ -40,10 +40,10 @@ commands:
 ```
 
 ```sh
-$ dingus greet
+$ plz greet
 Hello, Godzilla!
 
-$ dingus pet
+$ plz pet
 You have petted Godzilla!
 ```
 
@@ -64,10 +64,10 @@ commands:
 ```
 
 ```sh
-$ dingus greet
+$ plz greet
 Hello, Godzilla!
 
-$ dingus pet
+$ plz pet
 You have petted Maxwell!
 ```
 
@@ -95,14 +95,14 @@ commands:
 ```
 
 ```sh
-$ dingus greet
+$ plz greet
 Hello, Godzilla!
 
-$ dingus pet
+$ plz pet
 Petting...
 You have petted Maxwell!
 ```
 
 ## Learn more
 
-Interested in learning more? [Install dingus](./installation.md) and try it out!
+Interested in learning more? [Install plz](./installation.md) and try it out!

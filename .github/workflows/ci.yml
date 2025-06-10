@@ -126,7 +126,7 @@ jobs:
         echo "target flag is: ${{ env.TARGET_FLAGS }}"
         echo "target dir is: ${{ env.TARGET_DIR }}"
 
-    - name: Build dingus
+    - name: Build plz
       run: ${{ env.CARGO }} build --verbose --workspace ${{ env.TARGET_FLAGS }}
 
     - name: Run tests

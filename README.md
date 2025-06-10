@@ -1,5 +1,5 @@
 <h1 align="center">
-  Dingus
+  Plz
 </h1>
 
 <h3 align="center">
@@ -7,12 +7,12 @@
   <br>
   <br>
 
-  [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/yukitsune/dingus/ci.yml?branch=main)](https://github.com/YuKitsune/dingus/actions/workflows/ci.yml)
-  [![License](https://img.shields.io/github/license/YuKitsune/dingus)](https://github.com/YuKitsune/dingus/blob/main/LICENSE)
-  [![Latest Release](https://img.shields.io/github/v/release/YuKitsune/dingus?include_prereleases)](https://github.com/YuKitsune/dingus/releases)
+  [![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/yukitsune/plz/ci.yml?branch=main)](https://github.com/YuKitsune/plz/actions/workflows/ci.yml)
+  [![License](https://img.shields.io/github/license/YuKitsune/plz)](https://github.com/YuKitsune/plz/blob/main/LICENSE)
+  [![Latest Release](https://img.shields.io/github/v/release/YuKitsune/plz?include_prereleases)](https://github.com/YuKitsune/plz/releases)
 </h3>
 
-Dingus is a dead-simple task runner with a familiar POSIX-style interface.
+Plz (pronounced "Please") is a dead-simple task runner with a familiar POSIX-style interface.
 It's lightweight, easy to use, and perfect for consolidating project-specific tasks.
 
 ## Features
@@ -25,11 +25,11 @@ It's lightweight, easy to use, and perfect for consolidating project-specific ta
 ## Overview
 
 > **Warning**
-> Dingus is still in early development and it's configuration syntax and usage are subject to change.
+> plz is still in early development and it's configuration syntax and usage are subject to change.
 
-Dingus relies on YAML for its configuration.
+Plz relies on YAML for its configuration.
 
-In your `Dingus.yaml`, you can define variables at the root level.
+In your `plz.yaml`, you can define variables at the root level.
 These variables are global, so they're available to all commands and subcommands throughout the file.
 
 Example:
@@ -46,10 +46,10 @@ commands:
 ```
 
 ```sh
-$ dingus greet
+$ plz greet
 Hello, Godzilla!
 
-$ dingus pet
+$ plz pet
 You have petted Godzilla!
 ```
 
@@ -70,10 +70,10 @@ commands:
 ```
 
 ```sh
-$ dingus greet
+$ plz greet
 Hello, Godzilla!
 
-$ dingus pet
+$ plz pet
 You have petted Maxwell!
 ```
 
@@ -101,14 +101,14 @@ commands:
 ```
 
 ```sh
-$ dingus greet
+$ plz greet
 Hello, Godzilla!
 
-$ dingus pet
+$ plz pet
 Petting...
 You have petted Maxwell!
 ```
 
 ## Learn more
 
-Interested in learning more? Check out the [docs](https://dingus.sh/docs/introduction)!
+Interested in learning more? Check out the [docs](https://plz.sh/docs/introduction)!

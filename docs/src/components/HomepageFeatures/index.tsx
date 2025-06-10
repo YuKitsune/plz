@@ -14,7 +14,7 @@ const FeatureList: FeatureItem[] = [
     Svg: require('@site/static/img/twemoji/laptop.svg').default,
     description: (
       <>
-        Dingus is written in Rust, providing a single, cross-platform binary that works on Windows, macOS, and Linux, and doesn't rely on any specific shell.
+        Plz is written in Rust, providing a single, cross-platform binary that works on Windows, macOS, and Linux, and doesn't rely on any specific shell.
       </>
     ),
   },
@@ -23,7 +23,7 @@ const FeatureList: FeatureItem[] = [
     Svg: require('@site/static/img/twemoji/keyboard.svg').default,
     description: (
       <>
-        Dingus presents your tasks and variables in a POSIX-style interface, offering a familiar and consistent user experience.
+        Plz presents your tasks and variables in a POSIX-style interface, offering a familiar and consistent user experience.
       </>
     ),
   },

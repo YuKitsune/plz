@@ -247,7 +247,7 @@ mod tests {
     fn bash_command_execute_evaluates_variables() {
         // Arrange
         let variable_name = "name";
-        let variable_value = "Dingus";
+        let variable_value = "Alice";
         let mut variables = HashMap::new();
         variables.insert(variable_name.to_string(), variable_value.to_string());
 
@@ -297,7 +297,7 @@ mod tests {
     fn bash_command_get_output_evaluates_variables() {
         // Arrange
         let variable_name = "name";
-        let variable_value = "Dingus";
+        let variable_value = "Alice";
         let mut variables = HashMap::new();
         variables.insert(variable_name.to_string(), variable_value.to_string());
 
@@ -424,7 +424,7 @@ mod tests {
     fn raw_command_execute_executes_command() {
         // Arrange
         let temp_dir = create_temp_dir();
-        let file_name = "dingus.txt";
+        let file_name = "test.txt";
         let test_file_path = temp_dir.path().join(file_name);
 
         // Sanity check
@@ -449,7 +449,7 @@ mod tests {
     fn raw_command_execute_substitutes_variables_in_invocation() {
         // Arrange
         let temp_dir = create_temp_dir();
-        let file_name = "dingus.txt";
+        let file_name = "test.txt";
         let test_file_path = temp_dir.path().join(file_name);
 
         // Sanity check

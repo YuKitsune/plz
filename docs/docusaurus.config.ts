@@ -3,12 +3,12 @@ import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
-  title: 'Dingus',
+  title: 'plz',
   tagline: 'A dead-simple task runner.',
   favicon: 'img/favicon.png',
 
   // Set the production url of your site here
-  url: 'https://dingus.sh',
+  url: 'https://plz.sh',
 
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
@@ -17,7 +17,7 @@ const config: Config = {
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'throw',
 
-  scripts: [{src: 'https://plausible.io/js/script.js', defer: true, 'data-domain': 'dingus.sh'}],
+  scripts: [{src: 'https://plausible.io/js/script.js', defer: true, 'data-domain': 'plz.sh'}],
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -35,13 +35,13 @@ const config: Config = {
           sidebarPath: './sidebars.ts',
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/yukitsune/dingus/tree/main/docs/',
+            'https://github.com/yukitsune/plz/tree/main/docs/',
         },
         blog: {
           showReadingTime: true,
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/yukitsune/dingus/tree/main/docs/',
+            'https://github.com/yukitsune/plz/tree/main/docs/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -54,7 +54,7 @@ const config: Config = {
     // TODO: Replace with your project's social card
     // image: 'img/docusaurus-social-card.jpg',
     navbar: {
-      title: 'Dingus',
+      title: 'plz',
       items: [
         {
           type: 'docSidebar',
@@ -64,7 +64,7 @@ const config: Config = {
         },
         {to: '/blog', label: 'Blog', position: 'left'},
         {
-          href: 'https://github.com/yukitsune/dingus',
+          href: 'https://github.com/yukitsune/plz',
           label: 'GitHub',
           position: 'right',
         },
@@ -108,7 +108,7 @@ const config: Config = {
             },
             {
               label: 'GitHub',
-              href: 'https://github.com/yukitsune/dingus',
+              href: 'https://github.com/yukitsune/plz',
             },
           ],
         },
