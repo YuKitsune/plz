@@ -5,7 +5,6 @@ use crate::prompt::{PromptError, PromptExecutor};
 use colored::Colorize;
 use std::collections::HashMap;
 use std::env;
-use std::net::ToSocketAddrs;
 use std::string::FromUtf8Error;
 use thiserror::Error;
 
