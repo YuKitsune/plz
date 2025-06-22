@@ -51,7 +51,8 @@ impl VariableResolver for RealVariableResolver {
                     }
 
                     VariableConfig::Literal(literal_conf) => {
-                        let substituted_value = substitute_variables(literal_conf.value.as_str(), &resolved_variables);
+                        let substituted_value =
+                            substitute_variables(literal_conf.value.as_str(), &resolved_variables);
                         resolved_variables.insert(name.clone(), substituted_value);
                     }
 
@@ -179,7 +180,8 @@ pub fn substitute_variables(template: &str, variables: &VariableMap) -> String {
             // Substitute the variable if it exists
             if let Some(value) = variables.get(&var_name) {
                 result.push_str(value);
-            } else if let Ok(value) = env::var(&var_name) { // Also check system environment variables
+            } else if let Ok(value) = env::var(&var_name) {
+                // Also check system environment variables
                 result.push_str(&value);
             } else {
                 // If the variable is not found, leave it as is (including the $ sign)
@@ -222,7 +224,6 @@ pub enum VariableResolutionError {
 
 #[cfg(test)]
 mod tests {
-    use std::env::set_var;
     use super::*;
     use crate::args::MockArgumentResolver;
     use crate::config::VariableConfig::Prompt;
@@ -233,6 +234,7 @@ mod tests {
     };
     use crate::exec::{ExitStatus, MockCommandExecutor, Output};
     use crate::prompt::MockPromptExecutor;
+    use std::env::set_var;
 
     #[test]
     fn variable_resolver_resolves_shorthand_literal() {
@@ -610,7 +612,9 @@ mod tests {
             options: Default::default(),
         };
 
-        unsafe { set_var("NAME", "Alice"); }
+        unsafe {
+            set_var("NAME", "Alice");
+        }
 
         let name = "greeting";
         let value = "Hello, $NAME";
@@ -650,7 +654,9 @@ mod tests {
             options: Default::default(),
         };
 
-        unsafe { set_var("NAME", "Alice"); }
+        unsafe {
+            set_var("NAME", "Alice");
+        }
 
         let name = "greeting";
         let value = "Hello, $NAME";
