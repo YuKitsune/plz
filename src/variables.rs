@@ -533,6 +533,24 @@ mod tests {
     }
 
     #[test]
+    fn substitute_variables_substitutes_environment_variables() {
+        // Arrange
+        let template = "Hello, $name! You are $age years old.";
+        let variables = VariableMap::new();
+
+        unsafe {
+            set_var("name", "Alice");
+            set_var("age", "100");
+        }
+
+        // Act
+        let result = substitute_variables(template, &variables);
+
+        // Assert
+        assert_eq!(result, "Hello, Alice! You are 100 years old.")
+    }
+
+    #[test]
     fn substitute_variables_ignores_escaped() {
         // Arrange
         let template = "Hello, $name! You are \\$age years old.";
