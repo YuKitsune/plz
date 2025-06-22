@@ -4,6 +4,7 @@ use crate::exec::{CommandExecutor, ExecutionError, ExitStatus};
 use crate::prompt::{PromptError, PromptExecutor};
 use colored::Colorize;
 use std::collections::HashMap;
+use std::env;
 use std::string::FromUtf8Error;
 use thiserror::Error;
 
@@ -44,11 +45,14 @@ impl VariableResolver for RealVariableResolver {
             } else {
                 match config {
                     VariableConfig::ShorthandLiteral(value) => {
-                        resolved_variables.insert(name.clone(), value.clone());
+                        let substituted_value = substitute_variables(value, &resolved_variables);
+                        resolved_variables.insert(name.clone(), substituted_value.clone());
                     }
 
                     VariableConfig::Literal(literal_conf) => {
-                        resolved_variables.insert(name.clone(), literal_conf.value.clone());
+                        let substituted_value =
+                            substitute_variables(literal_conf.value.as_str(), &resolved_variables);
+                        resolved_variables.insert(name.clone(), substituted_value);
                     }
 
                     VariableConfig::Execution(execution_conf) => {
@@ -175,6 +179,9 @@ pub fn substitute_variables(template: &str, variables: &VariableMap) -> String {
             // Substitute the variable if it exists
             if let Some(value) = variables.get(&var_name) {
                 result.push_str(value);
+            } else if let Ok(value) = env::var(&var_name) {
+                // Also check system environment variables
+                result.push_str(&value);
             } else {
                 // If the variable is not found, leave it as is (including the $ sign)
                 result.push('$');
@@ -226,6 +233,7 @@ mod tests {
     };
     use crate::exec::{ExitStatus, MockCommandExecutor, Output};
     use crate::prompt::MockPromptExecutor;
+    use std::env::set_var;
 
     #[test]
     fn variable_resolver_resolves_shorthand_literal() {
@@ -525,6 +533,24 @@ mod tests {
     }
 
     #[test]
+    fn substitute_variables_substitutes_environment_variables() {
+        // Arrange
+        let template = "Hello, $name! You are $age years old.";
+        let variables = VariableMap::new();
+
+        unsafe {
+            set_var("name", "Alice");
+            set_var("age", "100");
+        }
+
+        // Act
+        let result = substitute_variables(template, &variables);
+
+        // Assert
+        assert_eq!(result, "Hello, Alice! You are 100 years old.")
+    }
+
+    #[test]
     fn substitute_variables_ignores_escaped() {
         // Arrange
         let template = "Hello, $name! You are \\$age years old.";
@@ -582,5 +608,93 @@ mod tests {
 
         // Assert
         assert_eq!(result, "Hello, Alice-the-Smith!")
+    }
+
+    #[test]
+    fn environment_variables_can_be_substituted_in_shorthand_literal_variables() {
+        // Arrange
+        let command_executor = MockCommandExecutor::new();
+        let mut argument_resolver = MockArgumentResolver::new();
+        argument_resolver
+            .expect_get()
+            .times(0..)
+            .returning(|_| None);
+
+        let prompt_executor = MockPromptExecutor::new();
+
+        let variable_resolver = RealVariableResolver {
+            command_executor: Box::new(command_executor),
+            prompt_executor: Box::new(prompt_executor),
+            argument_resolver: Box::new(argument_resolver),
+            options: Default::default(),
+        };
+
+        unsafe {
+            set_var("NAME", "Alice");
+        }
+
+        let name = "greeting";
+        let value = "Hello, $NAME";
+        let mut variable_configs = VariableConfigMap::new();
+        variable_configs.insert(
+            name.to_string(),
+            VariableConfig::ShorthandLiteral(value.to_string()),
+        );
+
+        // Act
+        let resolved_variables = variable_resolver.resolve_variables(&variable_configs);
+
+        // Assert
+        assert!(!resolved_variables.is_err());
+
+        let binding = resolved_variables.unwrap().clone();
+        let resolved_value = binding.get(name).unwrap().as_str();
+        assert_eq!(resolved_value, "Hello, Alice");
+    }
+
+    #[test]
+    fn environment_variables_can_be_substituted_in_literal_variables() {
+        // Arrange
+        let command_executor = MockCommandExecutor::new();
+        let mut argument_resolver = MockArgumentResolver::new();
+        argument_resolver
+            .expect_get()
+            .times(0..)
+            .returning(|_| None);
+
+        let prompt_executor = MockPromptExecutor::new();
+
+        let variable_resolver = RealVariableResolver {
+            command_executor: Box::new(command_executor),
+            prompt_executor: Box::new(prompt_executor),
+            argument_resolver: Box::new(argument_resolver),
+            options: Default::default(),
+        };
+
+        unsafe {
+            set_var("NAME", "Alice");
+        }
+
+        let name = "greeting";
+        let value = "Hello, $NAME";
+        let mut variable_configs = VariableConfigMap::new();
+        variable_configs.insert(
+            name.to_string(),
+            VariableConfig::Literal(LiteralVariableConfig {
+                value: value.to_string(),
+                argument: None,
+                environment_variable_name: None,
+            }),
+        );
+
+        // Act
+        let resolved_variables = variable_resolver.resolve_variables(&variable_configs);
+
+        // Assert
+        assert!(!resolved_variables.is_err());
+
+        let binding = resolved_variables.unwrap().clone();
+        let resolved_value = binding.get(name).unwrap().as_str();
+        assert_eq!(resolved_value, "Hello, Alice");
     }
 }
