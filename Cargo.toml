@@ -9,7 +9,7 @@ edition = "2021"
 anyhow = "1.0.86"
 clap = { version = "4.5.4", features = ["string"] }
 colored = "3.0.0"
-inquire = "0.8.0"
+inquire = "0.9.1"
 linked-hash-map = { version = "0.5.6", features = ["serde_impl"] }
 mockall = "0.13.0"
 serde = { version = "1.0", features = ["derive"] }
