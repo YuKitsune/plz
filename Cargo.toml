@@ -11,7 +11,7 @@ clap = { version = "4.5.4", features = ["string"] }
 colored = "3.0.0"
 inquire = "0.9.1"
 linked-hash-map = { version = "0.5.6", features = ["serde_impl"] }
-mockall = "0.13.0"
+mockall = "0.14.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 tempfile = "3.10.1"
