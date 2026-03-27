@@ -1,0 +1,9 @@
+commands:
+  greet:
+    action: cat example.txt
+
+  greet-sub:
+    actions:
+      - workdir: ./subdir
+        command: cat example.txt
+        

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io::IsTerminal;
 use std::io::Read;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 use thiserror::Error;
 
@@ -77,7 +77,11 @@ pub fn load() -> Result<FoundConfig, ConfigError> {
     };
 
     let current_platform = current_platform_provider().get_platform();
-    let config = parse_config(&config_text, current_platform)?;
+    let base_dir = match &source {
+        Source::File(path) => path.parent().map(|p| p.to_path_buf()),
+        _ => None,
+    };
+    let config = parse_config(&config_text, current_platform, base_dir.as_deref())?;
     Ok(FoundConfig { source, config })
 }
 
@@ -89,13 +93,17 @@ pub fn init() -> Result<String, ConfigError> {
     Ok(file_name.to_string())
 }
 
-fn parse_config_from(path: &String, current_platform: Platform) -> Result<Config, ConfigError> {
+fn parse_config_from(path: &Path, current_platform: Platform) -> Result<Config, ConfigError> {
     let config_text = fs::read_to_string(path).map_err(|err| ConfigError::ReadFailed(err))?;
-
-    parse_config(&config_text, current_platform)
+    let base_dir = path.parent();
+    parse_config(&config_text, current_platform, base_dir)
 }
 
-fn parse_config(text: &String, current_platform: Platform) -> Result<Config, ConfigError> {
+fn parse_config(
+    text: &String,
+    current_platform: Platform,
+    base_dir: Option<&Path>,
+) -> Result<Config, ConfigError> {
     // Parse the base config
     let mut base_config: Config =
         serde_yaml::from_str(text.as_str()).map_err(|err| ConfigError::ParseFailed(err))?;
@@ -109,13 +117,32 @@ fn parse_config(text: &String, current_platform: Platform) -> Result<Config, Con
             }
         }
 
-        let child_config =
-            parse_config_from(&import.source, current_platform.clone()).map_err(|err| {
+        let import_path = {
+            let raw = PathBuf::from(&import.source);
+            if raw.is_relative() {
+                if let Some(dir) = base_dir {
+                    normalize_path(&dir.join(&raw))
+                } else {
+                    raw
+                }
+            } else {
+                raw
+            }
+        };
+
+        let mut child_config =
+            parse_config_from(&import_path, current_platform.clone()).map_err(|err| {
                 ConfigError::ImportFailed {
                     alias: import.alias.clone(),
                     source: Box::new(err),
                 }
             })?;
+
+        // Resolve working directories in the imported config relative to its location
+        if let Some(import_dir) = import_path.parent() {
+            resolve_variable_working_dirs(&mut child_config.variables, import_dir);
+            resolve_command_working_dirs(&mut child_config.commands, import_dir);
+        }
 
         // Create a top-level command for every import
         let command = CommandConfig {
@@ -132,6 +159,108 @@ fn parse_config(text: &String, current_platform: Platform) -> Result<Config, Con
     }
 
     Ok(base_config)
+}
+
+/// Normalizes a path by resolving `.` and `..` components without touching the filesystem.
+fn normalize_path(path: &Path) -> PathBuf {
+    let mut normalized = PathBuf::new();
+    for component in path.components() {
+        match component {
+            std::path::Component::CurDir => {}
+            std::path::Component::ParentDir => {
+                normalized.pop();
+            }
+            c => normalized.push(c),
+        }
+    }
+    normalized
+}
+
+/// Resolves the working directory for a single execution config relative to `base_dir`.
+/// - If the execution has no working directory, sets it to `base_dir`.
+/// - If the execution has a relative working directory, resolves it against `base_dir`.
+/// - Absolute working directories are left unchanged.
+fn resolve_exec_workdir(exec: &mut ExecutionConfigVariant, base_dir: &Path) {
+    match exec {
+        ExecutionConfigVariant::ShellCommand(ShellCommandConfigVariant::Bash(bash)) => {
+            bash.working_directory = Some(resolve_dir(bash.working_directory.as_deref(), base_dir));
+        }
+        ExecutionConfigVariant::RawCommand(raw) => match raw {
+            RawCommandConfigVariant::Shorthand(cmd) => {
+                *raw = RawCommandConfigVariant::RawCommandConfig(RawCommandConfig {
+                    command: cmd.clone(),
+                    working_directory: Some(base_dir.to_string_lossy().to_string()),
+                });
+            }
+            RawCommandConfigVariant::RawCommandConfig(config) => {
+                config.working_directory =
+                    Some(resolve_dir(config.working_directory.as_deref(), base_dir));
+            }
+        },
+    }
+}
+
+/// Returns an absolute working directory.
+/// If `workdir` is none, then the `base_dir` is returned.
+/// If `workdir` is a relative path, it is joined with `base_dir`.
+/// If `workdir` is an absolute path, it is returned as-is.
+fn resolve_dir(workdir: Option<&str>, base_dir: &Path) -> String {
+    match workdir {
+        None => base_dir.to_string_lossy().to_string(),
+        Some(wd) => {
+            let path = PathBuf::from(wd);
+            if path.is_relative() {
+                normalize_path(&base_dir.join(path))
+                    .to_string_lossy()
+                    .to_string()
+            } else {
+                wd.to_string()
+            }
+        }
+    }
+}
+
+/// Resolves working directories in execution-based variables relative to `base_dir`.
+fn resolve_variable_working_dirs(variables: &mut VariableConfigMap, base_dir: &Path) {
+    for (_, variable) in variables.iter_mut() {
+        match variable {
+            VariableConfig::Execution(exec_conf) => {
+                resolve_exec_workdir(&mut exec_conf.execution, base_dir);
+            }
+            VariableConfig::Prompt(prompt_conf) => {
+                if let PromptOptionsVariant::Select(select_opts) = &mut prompt_conf.prompt.options {
+                    if let SelectOptionsConfig::Execution(exec_select_opts) =
+                        &mut select_opts.options
+                    {
+                        resolve_exec_workdir(&mut exec_select_opts.execution, base_dir);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Recursively resolves working directories for all executions in a command map relative to `base_dir`.
+fn resolve_command_working_dirs(commands: &mut CommandConfigMap, base_dir: &Path) {
+    for (_, command) in commands.iter_mut() {
+        resolve_command_working_dirs(&mut command.commands, base_dir);
+        resolve_variable_working_dirs(&mut command.variables, base_dir);
+
+        if let Some(action) = &mut command.action {
+            match action {
+                ActionConfig::SingleStep(single) => {
+                    resolve_exec_workdir(&mut single.action, base_dir);
+                }
+                ActionConfig::MultiStep(multi) => {
+                    for exec in &mut multi.actions {
+                        resolve_exec_workdir(exec, base_dir);
+                    }
+                }
+                ActionConfig::Alias(_) => {}
+            }
+        }
+    }
 }
 
 #[derive(Error, Debug)]
@@ -726,7 +855,7 @@ mod tests {
         let yaml = "commands:
     demo:
         action: echo \"Hello, World!\"";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         assert!(config.variables.is_empty());
     }
@@ -740,7 +869,7 @@ commands:
         variables:
             my-command-var: My command value
         action: echo \"Hello, World!\"";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         assert!(!config.variables.is_empty());
 
@@ -771,7 +900,7 @@ commands:
                 arg: command-arg
                 env: MY_VAR
         action: echo \"Hello, World!\"";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         assert!(!config.variables.is_empty());
 
@@ -828,7 +957,7 @@ commands:
                     position: 1
                 env: MY_VAR_3
         action: echo \"Hello, World!\"";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         assert!(!config.variables.is_empty());
 
@@ -919,7 +1048,7 @@ commands:
                         exec: cat example.txt
 
         action: echo \"Hello, World!\"";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         assert!(!config.variables.is_empty());
 
@@ -1026,7 +1155,7 @@ commands:
                     description: Your favourite food.
                     position: 1
         action: echo \"Hello, World!\"";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command = config.commands.get("demo").unwrap();
 
@@ -1078,7 +1207,7 @@ commands:
             command-var-1: Command value 1
             command-var-3: Command value 3
         action: echo \"Hello, World!\"";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         assert!(!config.variables.is_empty());
 
@@ -1106,7 +1235,7 @@ commands:
         let yaml = "commands:
     demo:
         action: ls";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command = config.commands.get("demo").unwrap();
         assert_eq!(
@@ -1132,7 +1261,7 @@ commands:
         let yaml = "commands:
     deps:
         alias: docker compose -f docker-compose.deps.yml";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command = config.commands.get("deps").unwrap();
         assert_eq!(
@@ -1157,7 +1286,7 @@ commands:
     demo:
         description: Says hello.
         action: ls";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command = config.commands.get("demo").unwrap();
         assert_eq!(
@@ -1186,7 +1315,7 @@ commands:
             gday:
                 action: ls
         action: cat example.txt";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command = config.commands.get("demo").unwrap();
         let gday_command = demo_command.commands.get("gday").unwrap();
@@ -1236,7 +1365,7 @@ commands:
         commands:
             gday:
                 action: ls";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command = config.commands.get("demo").unwrap();
         let gday_command = demo_command.commands.get("gday").unwrap();
@@ -1284,7 +1413,7 @@ commands:
         actions:
             - cat example.txt
             - ls";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command = config.commands.get("demo").unwrap();
         assert_eq!(
@@ -1321,7 +1450,7 @@ commands:
     demo_win:
         platform: Windows
         action: Get-Content example.txt";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command_nix = config.commands.get("demo_nix").unwrap();
         let demo_command_win = config.commands.get("demo_win").unwrap();
@@ -1370,7 +1499,7 @@ commands:
     demo:
         name: demonstration
         action: cat example.txt";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command = config.commands.get("demo").unwrap();
         assert_eq!(
@@ -1399,7 +1528,7 @@ commands:
             - bash: echo \"Hello, World!\"
             - bash: pwd
               workdir: /";
-        let config = parse_config(&yaml.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml.to_string(), Platform::Linux, None).unwrap();
 
         let demo_command = config.commands.get("demo").unwrap();
         assert_eq!(
@@ -1439,6 +1568,13 @@ commands:
     demo:
         action: echo \"You are $age years old.\"";
         let yaml3_file = create_temp_file(yaml3);
+        let yaml3_dir = yaml3_file
+            .path()
+            .parent()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
 
         let yaml2 = format!(
             "imports:
@@ -1453,6 +1589,13 @@ commands:
             yaml3_file.path().to_str().unwrap()
         );
         let yaml2_file = create_temp_file(yaml2.as_str());
+        let yaml2_dir = yaml2_file
+            .path()
+            .parent()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
 
         let yaml1 = format!(
             "imports:
@@ -1467,7 +1610,7 @@ commands:
             yaml2_file.path().to_str().unwrap()
         );
 
-        let config = parse_config(&yaml1.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml1.to_string(), Platform::Linux, None).unwrap();
 
         let root_demo_command = config.commands.get("demo").unwrap();
         assert_eq!(
@@ -1487,9 +1630,12 @@ commands:
         assert_eq!(
             second_level_command.commands.get("demo").unwrap().action,
             Some(ActionConfig::SingleStep(SingleActionConfig {
-                action: ExecutionConfigVariant::RawCommand(Shorthand(
-                    "echo \"Your last name is $last_name!\"".to_string()
-                ))
+                action: ExecutionConfigVariant::RawCommand(
+                    RawCommandConfigVariant::RawCommandConfig(RawCommandConfig {
+                        command: "echo \"Your last name is $last_name!\"".to_string(),
+                        working_directory: Some(yaml2_dir),
+                    })
+                )
             }))
         );
         assert_eq!(
@@ -1505,9 +1651,12 @@ commands:
         assert_eq!(
             third_level_command.commands.get("demo").unwrap().action,
             Some(ActionConfig::SingleStep(SingleActionConfig {
-                action: ExecutionConfigVariant::RawCommand(Shorthand(
-                    "echo \"You are $age years old.\"".to_string()
-                ))
+                action: ExecutionConfigVariant::RawCommand(
+                    RawCommandConfigVariant::RawCommandConfig(RawCommandConfig {
+                        command: "echo \"You are $age years old.\"".to_string(),
+                        working_directory: Some(yaml3_dir),
+                    })
+                )
             }))
         );
         assert_eq!(third_level_command.hidden, true);
@@ -1538,7 +1687,7 @@ commands:
             yaml2_file.path().to_str().unwrap()
         );
 
-        let config = parse_config(&yaml1.to_string(), Platform::Linux).unwrap();
+        let config = parse_config(&yaml1.to_string(), Platform::Linux, None).unwrap();
 
         let root_demo_command = config.commands.get("demo").unwrap();
         assert_eq!(
@@ -1562,5 +1711,250 @@ commands:
         let mut temp_file = NamedTempFile::new().unwrap();
         temp_file.write_all(content.as_bytes()).unwrap();
         return temp_file;
+    }
+
+    // --- Import path and working directory resolution tests ---
+
+    use std::fs;
+    use std::path::PathBuf;
+    use tempfile::TempDir;
+
+    fn create_temp_dir() -> TempDir {
+        TempDir::new().unwrap()
+    }
+
+    fn write_file(path: &PathBuf, content: &str) {
+        fs::write(path, content).unwrap();
+    }
+
+    #[test]
+    fn relative_import_source_resolves_from_config_file_location() {
+        let dir = create_temp_dir();
+
+        write_file(
+            &dir.path().join("child.yaml"),
+            "commands:
+  demo:
+    action: echo hello",
+        );
+
+        let parent_path = dir.path().join("parent.yaml");
+        write_file(
+            &parent_path,
+            "imports:
+  - alias: child
+    source: ./child.yaml
+commands: {}",
+        );
+
+        let config = parse_config_from(&parent_path, Platform::Linux).unwrap();
+
+        assert!(config.commands.contains_key("child"));
+    }
+
+    #[test]
+    fn imported_command_shorthand_action_gets_working_dir_from_config_location() {
+        let dir = create_temp_dir();
+        let dir_str = dir.path().to_str().unwrap().to_string();
+
+        write_file(
+            &dir.path().join("child.yaml"),
+            "commands:
+  demo:
+    action: ./run.sh",
+        );
+
+        let parent_path = dir.path().join("parent.yaml");
+        write_file(
+            &parent_path,
+            "imports:
+  - alias: child
+    source: ./child.yaml
+commands: {}",
+        );
+
+        let config = parse_config_from(&parent_path, Platform::Linux).unwrap();
+
+        let demo = config.commands["child"].commands["demo"].clone();
+        assert_eq!(
+            demo.action,
+            Some(ActionConfig::SingleStep(SingleActionConfig {
+                action: ExecutionConfigVariant::RawCommand(
+                    RawCommandConfigVariant::RawCommandConfig(RawCommandConfig {
+                        command: "./run.sh".to_string(),
+                        working_directory: Some(dir_str),
+                    })
+                )
+            }))
+        );
+    }
+
+    #[test]
+    fn imported_command_bash_action_gets_working_dir_from_config_location() {
+        let dir = create_temp_dir();
+        let dir_str = dir.path().to_str().unwrap().to_string();
+
+        write_file(
+            &dir.path().join("child.yaml"),
+            "commands:
+  demo:
+    action:
+      bash: echo hello",
+        );
+
+        let parent_path = dir.path().join("parent.yaml");
+        write_file(
+            &parent_path,
+            "imports:
+  - alias: child
+    source: ./child.yaml
+commands: {}",
+        );
+
+        let config = parse_config_from(&parent_path, Platform::Linux).unwrap();
+
+        let demo = config.commands["child"].commands["demo"].clone();
+        assert_eq!(
+            demo.action,
+            Some(ActionConfig::SingleStep(SingleActionConfig {
+                action: ExecutionConfigVariant::ShellCommand(ShellCommandConfigVariant::Bash(
+                    BashCommandConfig {
+                        command: "echo hello".to_string(),
+                        working_directory: Some(dir_str),
+                    }
+                ))
+            }))
+        );
+    }
+
+    #[test]
+    fn imported_command_relative_workdir_resolves_against_config_location() {
+        let dir = create_temp_dir();
+        let expected_workdir = dir.path().join("scripts").to_str().unwrap().to_string();
+
+        write_file(
+            &dir.path().join("child.yaml"),
+            "commands:
+  demo:
+    action:
+      command: ./run.sh
+      workdir: ./scripts",
+        );
+
+        let parent_path = dir.path().join("parent.yaml");
+        write_file(
+            &parent_path,
+            "imports:
+  - alias: child
+    source: ./child.yaml
+commands: {}",
+        );
+
+        let config = parse_config_from(&parent_path, Platform::Linux).unwrap();
+
+        let demo = config.commands["child"].commands["demo"].clone();
+        assert_eq!(
+            demo.action,
+            Some(ActionConfig::SingleStep(SingleActionConfig {
+                action: ExecutionConfigVariant::RawCommand(
+                    RawCommandConfigVariant::RawCommandConfig(RawCommandConfig {
+                        command: "./run.sh".to_string(),
+                        working_directory: Some(expected_workdir),
+                    })
+                )
+            }))
+        );
+    }
+
+    #[test]
+    fn imported_command_absolute_workdir_is_unchanged() {
+        let dir = create_temp_dir();
+        #[cfg(windows)]
+        let absolute_workdir = "C:\\absolute\\path";
+        #[cfg(not(windows))]
+        let absolute_workdir = "/absolute/path";
+
+        write_file(
+            &dir.path().join("child.yaml"),
+            &format!(
+                "commands:
+  demo:
+    action:
+      command: ./run.sh
+      workdir: {}",
+                absolute_workdir
+            ),
+        );
+
+        let parent_path = dir.path().join("parent.yaml");
+        write_file(
+            &parent_path,
+            "imports:
+  - alias: child
+    source: ./child.yaml
+commands: {}",
+        );
+
+        let config = parse_config_from(&parent_path, Platform::Linux).unwrap();
+
+        let demo = config.commands["child"].commands["demo"].clone();
+        assert_eq!(
+            demo.action,
+            Some(ActionConfig::SingleStep(SingleActionConfig {
+                action: ExecutionConfigVariant::RawCommand(
+                    RawCommandConfigVariant::RawCommandConfig(RawCommandConfig {
+                        command: "./run.sh".to_string(),
+                        working_directory: Some(absolute_workdir.to_string()),
+                    })
+                )
+            }))
+        );
+    }
+
+    #[test]
+    fn nested_imported_command_gets_working_dir_from_its_config_location() {
+        let dir = create_temp_dir();
+        let sub_dir = dir.path().join("sub");
+        fs::create_dir(&sub_dir).unwrap();
+        let sub_dir_str = sub_dir.to_str().unwrap().to_string();
+
+        write_file(
+            &sub_dir.join("grandchild.yaml"),
+            "commands:
+  demo:
+    action: ./run.sh",
+        );
+
+        write_file(
+            &sub_dir.join("child.yaml"),
+            "imports:
+  - alias: grandchild
+    source: ./grandchild.yaml
+commands: {}",
+        );
+
+        let parent_path = dir.path().join("parent.yaml");
+        write_file(
+            &parent_path,
+            "imports:
+  - alias: child
+    source: ./sub/child.yaml
+commands: {}",
+        );
+
+        let config = parse_config_from(&parent_path, Platform::Linux).unwrap();
+
+        let demo = config.commands["child"].commands["grandchild"].commands["demo"].clone();
+        assert_eq!(
+            demo.action,
+            Some(ActionConfig::SingleStep(SingleActionConfig {
+                action: ExecutionConfigVariant::RawCommand(
+                    RawCommandConfigVariant::RawCommandConfig(RawCommandConfig {
+                        command: "./run.sh".to_string(),
+                        working_directory: Some(sub_dir_str),
+                    })
+                )
+            }))
+        );
     }
 }
