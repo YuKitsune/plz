@@ -99,7 +99,11 @@ fn parse_config_from(path: &Path, current_platform: Platform) -> Result<Config, 
     parse_config(&config_text, current_platform, base_dir)
 }
 
-fn parse_config(text: &String, current_platform: Platform, base_dir: Option<&Path>) -> Result<Config, ConfigError> {
+fn parse_config(
+    text: &String,
+    current_platform: Platform,
+    base_dir: Option<&Path>,
+) -> Result<Config, ConfigError> {
     // Parse the base config
     let mut base_config: Config =
         serde_yaml::from_str(text.as_str()).map_err(|err| ConfigError::ParseFailed(err))?;
@@ -206,7 +210,9 @@ fn resolve_dir(workdir: Option<&str>, base_dir: &Path) -> String {
         Some(wd) => {
             let path = PathBuf::from(wd);
             if path.is_relative() {
-                normalize_path(&base_dir.join(path)).to_string_lossy().to_string()
+                normalize_path(&base_dir.join(path))
+                    .to_string_lossy()
+                    .to_string()
             } else {
                 wd.to_string()
             }
@@ -1562,7 +1568,13 @@ commands:
     demo:
         action: echo \"You are $age years old.\"";
         let yaml3_file = create_temp_file(yaml3);
-        let yaml3_dir = yaml3_file.path().parent().unwrap().to_str().unwrap().to_string();
+        let yaml3_dir = yaml3_file
+            .path()
+            .parent()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
 
         let yaml2 = format!(
             "imports:
@@ -1577,7 +1589,13 @@ commands:
             yaml3_file.path().to_str().unwrap()
         );
         let yaml2_file = create_temp_file(yaml2.as_str());
-        let yaml2_dir = yaml2_file.path().parent().unwrap().to_str().unwrap().to_string();
+        let yaml2_dir = yaml2_file
+            .path()
+            .parent()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
 
         let yaml1 = format!(
             "imports:
@@ -1799,12 +1817,12 @@ commands: {}",
         assert_eq!(
             demo.action,
             Some(ActionConfig::SingleStep(SingleActionConfig {
-                action: ExecutionConfigVariant::ShellCommand(
-                    ShellCommandConfigVariant::Bash(BashCommandConfig {
+                action: ExecutionConfigVariant::ShellCommand(ShellCommandConfigVariant::Bash(
+                    BashCommandConfig {
                         command: "echo hello".to_string(),
                         working_directory: Some(dir_str),
-                    })
-                )
+                    }
+                ))
             }))
         );
     }
