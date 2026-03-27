@@ -490,8 +490,9 @@ Only support for raw and Bash executions are supported. Other shells will be add
 
 ### Working Directories
 
-By default, commands are executed in the current working directory.
-This can be overridden using the `workdir` field.
+By default, commands are executed in the directory containing the config file they are defined in.
+For commands in an imported config file, the default working directory is the directory containing that imported file, not the directory of the root config.
+This can be overridden using the `workdir` field. When `workdir` is a relative path in an imported config, it is resolved relative to that imported config file's directory.
 
 ```yaml
 # Raw execution
@@ -544,8 +545,8 @@ options:
 Additional config files can be imported using the `imports` field. Importing a config file effectively creates a new 
 subcommand with the description, variables, and subcommands from the provided file.
 
-Imports require an `alias`, and a `source`. The `alias` is used to set the name of the subcommand, and the `source` is 
-the path to the file to import.
+Imports require an `alias`, and a `source`. The `alias` is used to set the name of the subcommand, and the `source` is
+the path to the file to import. Relative paths are resolved from the directory containing the config file, not the current working directory.
 
 For example, the following config will import all commands and variables defined in the `./docs/plz.yaml` file into a
 subcommand called `docs`.
