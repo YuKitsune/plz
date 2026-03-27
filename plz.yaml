@@ -2,6 +2,9 @@ imports:
   - alias: docs
     source: ./docs/plz.yaml
 
+  - alias: sample
+    source: ./samples/plz.yaml
+
 commands:
 
   build:
