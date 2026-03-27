@@ -1869,6 +1869,9 @@ commands: {}",
     #[test]
     fn imported_command_absolute_workdir_is_unchanged() {
         let dir = create_temp_dir();
+        #[cfg(windows)]
+        let absolute_workdir = "C:\\absolute\\path";
+        #[cfg(not(windows))]
         let absolute_workdir = "/absolute/path";
 
         write_file(
