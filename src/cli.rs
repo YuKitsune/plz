@@ -81,6 +81,8 @@ fn create_commands(
             let mut command = Command::new(name)
                 .subcommands(subcommands)
                 .subcommand_required(!has_action)
+                // Show the help output instead of an error. The error lists all subcommands, including hidden ones.
+                .arg_required_else_help(!has_action)
                 .args(args)
                 .hide(command_config.hidden);
 
